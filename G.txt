@@ -1,0 +1,104 @@
+PART B – Running JUnit Tests with Gradle in Jenkins
+Step 1 – Create Gradle Project
+
+gradle init
+Choose:
+• Application
+• Java
+• JUnit Jupiter
+• Groovy DSL
+Project name: lab12-gradle
+Step 2 – Verify build.gradle
+Ensure it contains:
+plugins {
+id 'java'
+}
+repositories {
+mavenCentral()
+}
+dependencies {
+testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+}
+test {
+useJUnitPlatform()
+}
+Step 3 – Create Java Class
+src/main/java/com/devops/lab/Calculator.java
+package com.devops.lab;
+public class Calculator {
+public int subtract(int a, int b) {
+return a - b;
+}
+}
+Step 4 – Create JUnit Test
+src/test/java/com/devops/lab/CalculatorTest.java
+package com.devops.lab;
+
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+class CalculatorTest {
+Calculator calculator = new Calculator();
+@Test
+void testSubtract() {
+assertEquals(5, calculator.subtract(10,5));
+}
+}
+Step 5 – Run Tests Locally
+./gradlew test
+Verify:
+build/test-results/test
+Contains XML reports.
+Step 6 – Push to Git
+git init
+git add .
+git commit -m "Gradle project with JUnit"
+git remote add origin <repo-url>
+git push -u origin main
+Step 7 – Configure Jenkins for Gradle
+Manage Jenkins → Global Tool Configuration
+Add:
+• JDK17
+• Gradle (optional if not using wrapper)
+If using Gradle Wrapper (gradlew), no global Gradle needed.
+Step 8 – Create Gradle Pipeline Job
+New Item → Pipeline
+Name: Lab-12-Gradle
+
+Step 9 – Create Jenkinsfile (Gradle)
+pipeline {
+agent any
+
+tools {
+jdk 'JDK17'
+}
+stages {
+stage('Checkout') {
+steps {
+git '<repo-url>'
+}
+}
+stage('Build & Test') {
+steps {
+sh './gradlew clean test'
+}
+}
+}
+post {
+always {
+junit '**/build/test-results/test/*.xml'
+}
+}
+}
+Commit and push.
+Step 10 – Run Gradle Pipeline
+Click Build Now.
+Verify:
+• Test executed
+• Report published in Jenkins
+Validation: Force Failure
+Modify test:
+assertEquals(100, calculator.subtract(10,5));
+Push and rerun.
+Expected:
+• Pipeline FAILED
+• Red test in Jenkins
